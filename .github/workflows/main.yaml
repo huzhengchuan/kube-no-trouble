@@ -63,6 +63,21 @@ jobs:
         with:
           name: release-artifacts-${{ matrix.os }}-${{ matrix.arch }}
           path: release-artifacts
+  build-docker:
+    name: Build Docker Image
+    needs:
+      [pre-commit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: build docker image
+        run: |
+          docker buildx build .
   integration-test:
     name: integration test
     needs:
@@ -102,7 +117,7 @@ jobs:
   create-release:
     name: Create Release
     needs:
-      [test, integration-test]
+      [test, build-docker, integration-test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     outputs:
